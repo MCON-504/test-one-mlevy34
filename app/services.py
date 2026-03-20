@@ -11,7 +11,11 @@ def get_all_recipes() -> list[dict]:
         3. Return the list of dicts.
     """
     # TODO: Implement this method
-    pass
+    recipes = Recipe.query.order_by(Recipe.created_at).all()
+    new_recipies = []
+    for recipe in recipes:
+        new_recipies.append(recipe.to_dict())
+    return new_recipies
 
 def get_recipe_by_id(recipe_id: int) -> dict:
     """Return a single recipe dict by its id, or 404.
@@ -21,7 +25,11 @@ def get_recipe_by_id(recipe_id: int) -> dict:
         2. Return the recipe as a dict.
     """
     # TODO: Implement this method
-    pass
+    recipe = db.session.get(Recipe, recipe_id)
+    if not recipe:
+        return {"Error" : 404}
+    else:
+        return recipe.to_dict()
 
 
 def create_recipe(data: dict) -> dict:
@@ -35,9 +43,18 @@ def create_recipe(data: dict) -> dict:
         3. Return the new recipe as a dict.
     """
     # TODO: Implement this method
-    pass
-
-
+    new_recipe = Recipe(
+        user_id = data["user_id"],
+        title = data["title"], description = data["description"],
+        instructions= data["instructions"], prep_time = data["prep_time"],
+    )
+    db.session.add(new_recipe)
+    try:
+        db.session.commit()
+    except ValueError as ex:
+        db.session.rollback()
+        raise ValueError("Recipe not found, Invalid")
+    return new_recipe.to_dict()
 def delete_recipe(recipe_id: int) -> None:
     """Delete a recipe by its id, or 404 if not found.
 
@@ -46,7 +63,16 @@ def delete_recipe(recipe_id: int) -> None:
         2. Delete it from the session and commit.
     """
     # TODO: Implement this method
-    pass
+    recipe = db.session.get(Recipe, recipe_id)
+    if not recipe:
+        raise LookupError("Recipe not found", 404)
+    db.session.delete(recipe)
+    try:
+        db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        raise ValueError(ex)
+
 
 
 def update_recipe(recipe_id: int, data: dict) -> dict:
@@ -61,5 +87,15 @@ def update_recipe(recipe_id: int, data: dict) -> dict:
         4. Return the updated recipe as a dict.
     """
     # TODO: Implement this method
-    pass
+    recipe = Recipe(Recipe, recipe_id)
+    if not recipe:
+        raise LookupError("Recipe not found", 404)
+    for field in data:
+        recipe.field = data[f"{field}"]
+    try:
+        db.session.commit()
+    except Exception as ex:
+        raise ValueError(ex)
+    db.session.rollback()
+    return recipe.to_dict()
 

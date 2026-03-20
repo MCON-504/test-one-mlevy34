@@ -1,3 +1,5 @@
+from http.client import responses
+
 from flask import Blueprint, jsonify, request
 
 from .services import get_all_recipes, get_recipe_by_id, create_recipe, delete_recipe, update_recipe
@@ -21,7 +23,7 @@ def list_recipes():
 def get_recipe(recipe_id: int):
     """Return a single recipe as JSON."""
     recipe = get_recipe_by_id(recipe_id)
-    return jsonify(recipe)
+    return jsonify(recipe), 200
 
 
 @main.route("/api/recipes", methods=["POST"])
@@ -36,7 +38,18 @@ def add_recipe():
         3. Call create_recipe() from services and return the result with status 201.
     """
     # TODO: Implement this route
-    pass
+    response = request.get_json()
+    fields = ["title", "description", "instructions", "prep_time", "user_id"]
+    issues = ""
+    for field in fields:
+        if field not in response:
+            issues += f"{field} missing,"
+    if issues != "":
+        return {"Error:" : 400, "Issues": f"{issues}"}
+    else:
+        return {"Result" : create_recipe(response), "Status" : 201}, 201
+
+
 
 
 @main.route("/api/recipes/<int:recipe_id>", methods=["PUT"])
@@ -49,7 +62,9 @@ def modify_recipe(recipe_id: int):
         3. Return the updated recipe as JSON.
     """
     # TODO: Implement this route
-    pass
+    response = request.get_json()
+    new_recipe = update_recipe(recipe_id, response)
+    return new_recipe, 200
 
 
 @main.route("/api/recipes/<int:recipe_id>", methods=["DELETE"])
@@ -61,4 +76,5 @@ def remove_recipe(recipe_id: int):
         2. Return a 204 No Content response.
     """
     # TODO: Implement this route
-    pass
+    delete_recipe(recipe_id)
+    return "No content response", 204
